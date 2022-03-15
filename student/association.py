@@ -9,7 +9,7 @@
 # https://www.udacity.com/course/self-driving-car-engineer-nanodegree--nd013
 # ----------------------------------------------------------------------
 #
-#Edited
+
 # imports
 import numpy as np
 from scipy.stats.distributions import chi2
