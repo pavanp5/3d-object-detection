@@ -66,6 +66,8 @@ def load_configs_model(model_name='darknet', configs=None):
         ####### ID_S3_EX1-3 START #######     
         #######
         print("student task ID_S3_EX1-3")
+        configs.model_path = os.path.join(parent_path, 'tools', 'objdet_models', 'resnet')
+        configs.pretrained_filename = os.path.join(configs.model_path, 'pretrained', 'fpn_resnet_18_epoch_300.pth')
         configs.input_size = (608, 608)#
         configs.hm_size = (152, 152)#
         configs.down_ratio = 4#
@@ -77,7 +79,7 @@ def load_configs_model(model_name='darknet', configs=None):
         configs.num_z = 1#
         configs.num_dim = 3#
         configs.num_direction = 2#
-        configs.pretrained_filename='/home/workspace/tools/objdet_models/resnet/pretrained/fpn_resnet_18_epoch_300.pth'
+        #configs.pretrained_filename='/home/workspace/tools/objdet_models/resnet/pretrained/fpn_resnet_18_epoch_300.pth'
         configs.arch = 'fpn_resnet'#
         configs.peak_thresh = 0.2#
         

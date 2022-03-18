@@ -47,34 +47,34 @@ def drawRotatedBox(img, x, y, w, l, yaw, color):
     return img 
 
 def get_corners(x, y, w, l, yaw):
-    bev_corners = np.zeros((4, 2), dtype=np.float32)
-    cos_yaw = np.cos(yaw)
-    sin_yaw = np.sin(yaw)
+    box_corners = np.zeros((4, 2), dtype=np.float32)
 
-    # front left
-    bev_corners[0, 0] = x - w / 2 * cos_yaw - l / 2 * sin_yaw
-    bev_corners[0, 1] = y - w / 2 * sin_yaw + l / 2 * cos_yaw
+    box_corners[0, 0] = x - (w / 2 )* np.cos(yaw) - (l / 2 )* np.sin(yaw)
+    box_corners[0, 1] = y - (w / 2 )* np.sin(yaw) + (l / 2 )* np.cos(yaw)
 
-    # rear left
-    bev_corners[1, 0] = x - w / 2 * cos_yaw + l / 2 * sin_yaw
-    bev_corners[1, 1] = y - w / 2 * sin_yaw - l / 2 * cos_yaw
 
-    # rear right
-    bev_corners[2, 0] = x + w / 2 * cos_yaw + l / 2 * sin_yaw
-    bev_corners[2, 1] = y + w / 2 * sin_yaw - l / 2 * cos_yaw
+    box_corners[1, 0] = x - (w / 2) * np.cos(yaw) + (l / 2) * np.sin(yaw)
+    box_corners[1, 1] = y - (w / 2) * np.sin(yaw) - (l / 2) * np.cos(yaw)
 
-    # front right
-    bev_corners[3, 0] = x + w / 2 * cos_yaw - l / 2 * sin_yaw
-    bev_corners[3, 1] = y + w / 2 * sin_yaw + l / 2 * cos_yaw
 
-    return bev_corners
+    box_corners[2, 0] = x + (w / 2) * np.cos(yaw) + (l / 2) * np.sin(yaw)
+    box_corners[2, 1] = y + (w / 2) * np.sin(yaw) - (l / 2) * np.cos(yaw)
+
+
+    box_corners[3, 0] = x + (w / 2) * np.cos(yaw) - (l / 2) * np.sin(yaw)
+    box_corners[3, 1] = y + (w / 2) * np.sin(yaw) + (l / 2) * np.cos(yaw)
+    
+
+    return box_corners
 
 from shapely.geometry import Polygon
 
 def calculate_iou(box_1,box_2):
-    poly_1 = Polygon(box_1)
-    poly_2 = Polygon(box_2)
-    iou = poly_1.intersection(poly_2).area / poly_1.union(poly_2).area
+    
+    box_1 = Polygon(box_1)
+    box_2 = Polygon(box_2)
+    iou = box_1.intersection(box_2).area / box_1.union(box_2).area
+
     return iou
 
 def show_objects_and_labels_in_bev(detections,lidar_bev,labels,labels_valid,configs_det):
@@ -117,7 +117,7 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
         yhat_corners.append(get_corners(_x,_y,_w,_l, (-1)*_yaw))
         if show_bev_det==True:
             img = drawRotatedBox(img, _x,_y,_w,_l, (-1)*_yaw,color)
-        all_positives = all_positives + 1
+        #all_positives = all_positives + 1
    
     color_l = [0, 0, 255]
     color_w = [255, 255, 255]
@@ -134,7 +134,7 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
         matches_lab_det = []
         
         if valid: # exclude all labels from statistics which are not considered valid
-            
+            all_positives = all_positives + 1
 
             x = label.box.center_x
             label.box.center_x = configs_det.bev_width - (label.box.center_y  + 25 ) * (609/50)
@@ -149,11 +149,13 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
             
             for yhat, d in zip(yhat_corners,detections):
                 iou = calculate_iou(y_corners,yhat)
+                
                 if iou > .6:
                    
                     match_fn = 1
                     match_fp = match_fp + 1
                     i,_x,_y, _z, _h, _w, _l, _yaw = d
+            
                     dist_x = label.box.center_x - _x
                     dist_y = label.box.center_y - _y
                     dist_z = label.box.center_z - _z
@@ -163,8 +165,8 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
                     matches_lab_det.append([iou,dist_x, dist_y, dist_z])
              
                    
-            if match_fn == 0:
-                false_negatives = false_negatives + 1                     
+            
+            false_negatives = all_positives - true_positives                     
             
             # compute intersection over union (iou) and distance between centers
 
@@ -199,11 +201,11 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
     ####### ID_S4_EX2 START #######     
     #######
     print("student task ID_S4_EX2") 
-    
-    if match_fp < len(yhat_corners):
-        false_positives = len(yhat_corners) - match_fp
-    else:
-        false_positives = 0
+    false_positives = len(detections) - true_positives
+    #if match_fp < len(yhat_corners):
+    #    
+    #else:
+    #    false_positives = 0
     #for yhat in yhat_corners:
     #    false_positives = false_positives + 1
     
