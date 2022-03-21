@@ -198,17 +198,19 @@ def pcl_from_range_image(frame, lidar_name):
 
 # project detected bounding boxes into birds-eye view
 def project_detections_into_bev(bev_map, detections, configs, color=[]):
+   
     for row in detections:
         # extract detection
         _id, _x, _y, _z, _h, _w, _l, _yaw = row
 
         # convert from metric into pixel coordinates
+        
         x = (_y - configs.lim_y[0]) / (configs.lim_y[1] - configs.lim_y[0]) * configs.bev_width
         y = (_x - configs.lim_x[0]) / (configs.lim_x[1] - configs.lim_x[0]) * configs.bev_height
         z = _z - configs.lim_z[0]
         w = _w / (configs.lim_y[1] - configs.lim_y[0]) * configs.bev_width
         l = _l / (configs.lim_x[1] - configs.lim_x[0]) * configs.bev_height
-        yaw = -_yaw
+        yaw = (-1)*_yaw
 
         # draw object bounding box into birds-eye view
         if not color:
@@ -281,13 +283,28 @@ def convert_labels_into_objects(object_labels, configs):
     detections = []
     for label in object_labels:
         # transform label into a candidate object
+        print(label.type)
         if label.type==1 : # only use vehicles
+            print("v")
+            #label.box.center_x = label.box.center_y * (50/609)
+            label.box.center_x = 609 - label.box.center_x
+            label.box.center_y = 609 - label.box.center_y
+            x  = label.box.center_y * (50/609)
+            label.box.center_y = (label.box.center_x)* (50/609) -25
+            label.box.center_x = x
+            label.box.width = label.box.width*(50/609)
+            label.box.length = label.box.length*(50/609)
+            
             candidate = [label.type, label.box.center_x, label.box.center_y, label.box.center_z,
                          label.box.height, label.box.width, label.box.length, label.box.heading]
 
-            # only add to object list if candidate is within detection area    
+            # only add to object list if candidate is within detection area  
+            ##SoC PP Mar 19 2022
             if(is_label_inside_detection_area(candidate, configs)):
                 detections.append(candidate)
+            print(candidate)
+            #detections.append(candidate)
+            ##Eoc PP Mar 19 2022
 
     return detections
 
@@ -366,7 +383,7 @@ def show_objects_labels_in_bev(detections, object_labels, bev_maps, configs):
     # project detections and labels into birds-eye view
     bev_map = (bev_maps.squeeze().permute(1, 2, 0).numpy() * 255).astype(np.uint8)
     bev_map = cv2.resize(bev_map, (configs.bev_width, configs.bev_height))
-    
+  
     label_detections = convert_labels_into_objects(object_labels, configs)
     project_detections_into_bev(bev_map, label_detections, configs, [0,255,0])
     project_detections_into_bev(bev_map, detections, configs, [0,0,255])
@@ -382,6 +399,7 @@ def show_objects_in_bev_labels_in_camera(detections, bev_maps, image, object_lab
     # project detections into birds-eye view
     bev_map = (bev_maps.squeeze().permute(1, 2, 0).numpy() * 255).astype(np.uint8)
     bev_map = cv2.resize(bev_map, (configs.bev_width, configs.bev_height))
+    
     project_detections_into_bev(bev_map, detections, configs)
     bev_map = cv2.rotate(bev_map, cv2.ROTATE_180)
 

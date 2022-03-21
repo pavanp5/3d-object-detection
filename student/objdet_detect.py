@@ -290,14 +290,31 @@ def detect_objects(input_bev_maps, model, configs):
                         
                         if det.shape[0]> 0:
                             for d in det:
+                                
+                                print(d)
                                 _x = configs.bev_width - d[1]
                                 _y = configs.bev_height - d[2]
+                                _x = d[1]
+                                _y = d[2]
+                                
+                               
                                 _z = d[3]
                                 _h = d[4]
                                 _w = d[5]
                                 _l = d[6]
-                                _yaw = d[7]
+                                _yaw = (-1)*d[7]
+                                x = (_y) * (50/609)
+                                _y = (_x) * (50/609) -25
+                                _x = x
+                                
+                                _z = _z 
+                                _l = _l * (50/609)
+                                _w = _w * (50/609)
+                                i = 0
                                 d1 = i,_x,_y, _z, _h, _w, _l, _yaw
+                               
+                                    
+                                print(d1)
                                 objects.append(d1)
             
 

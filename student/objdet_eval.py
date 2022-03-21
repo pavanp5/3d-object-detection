@@ -112,9 +112,20 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
     all_positives = 0
     false_positives = 0
     false_negatives = 0
+
     for d1 in detections:
         i,_x,_y, _z, _h, _w, _l, _yaw = d1
+        
+        x = (_y+25)*(609/50)
+        _y = (_x)*(609/50) 
+        _x = x
+        _x = 609 - _x
+        _y = 609 -_y
+        _w = _w*(609/50)
+        _l = _l*(609/50)
+        
         yhat_corners.append(get_corners(_x,_y,_w,_l, (-1)*_yaw))
+        
         if show_bev_det==True:
             img = drawRotatedBox(img, _x,_y,_w,_l, (-1)*_yaw,color)
         #all_positives = all_positives + 1
@@ -155,6 +166,11 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
                     match_fn = 1
                     match_fp = match_fp + 1
                     i,_x,_y, _z, _h, _w, _l, _yaw = d
+                    x = (_y+25)*(609/50)
+                    _y = (_x)*(609/50) 
+                    _x = x
+                    _x = 609 - _x
+                    _y = 609 -_y
             
                     dist_x = label.box.center_x - _x
                     dist_y = label.box.center_y - _y
