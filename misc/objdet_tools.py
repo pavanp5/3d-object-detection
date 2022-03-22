@@ -281,30 +281,20 @@ def validate_object_labels(object_labels, pcl, configs, min_num_points):
 def convert_labels_into_objects(object_labels, configs):
     
     detections = []
+    
     for label in object_labels:
         # transform label into a candidate object
-        print(label.type)
+       
         if label.type==1 : # only use vehicles
-            print("v")
-            #label.box.center_x = label.box.center_y * (50/609)
-            label.box.center_x = 609 - label.box.center_x
-            label.box.center_y = 609 - label.box.center_y
-            x  = label.box.center_y * (50/609)
-            label.box.center_y = (label.box.center_x)* (50/609) -25
-            label.box.center_x = x
-            label.box.width = label.box.width*(50/609)
-            label.box.length = label.box.length*(50/609)
+            label = scale_label_pixel_to_m(label) #Ins PP Mar 21 2022
             
             candidate = [label.type, label.box.center_x, label.box.center_y, label.box.center_z,
                          label.box.height, label.box.width, label.box.length, label.box.heading]
 
             # only add to object list if candidate is within detection area  
-            ##SoC PP Mar 19 2022
             if(is_label_inside_detection_area(candidate, configs)):
                 detections.append(candidate)
-            print(candidate)
-            #detections.append(candidate)
-            ##Eoc PP Mar 19 2022
+           
 
     return detections
 
@@ -394,7 +384,7 @@ def show_objects_labels_in_bev(detections, object_labels, bev_maps, configs):
 
 
 # visualize detection results as overlay in birds-eye view and ground-truth labels in camera image
-def show_objects_in_bev_labels_in_camera(detections, bev_maps, image, object_labels, object_labels_valid, camera_calibration, configs):
+def show_objects_in_bev_labels_in_camera(detections, bev_maps, image, object_labels, object_labels_valid, camera_calibration, configs,exec_list):
 
     # project detections into birds-eye view
     bev_map = (bev_maps.squeeze().permute(1, 2, 0).numpy() * 255).astype(np.uint8)
@@ -404,7 +394,8 @@ def show_objects_in_bev_labels_in_camera(detections, bev_maps, image, object_lab
     bev_map = cv2.rotate(bev_map, cv2.ROTATE_180)
 
     # project ground-truth labels into camera image
-    img_rgb = project_labels_into_camera(camera_calibration, image, object_labels, object_labels_valid)
+    
+    img_rgb = project_labels_into_camera(camera_calibration, image, object_labels, object_labels_valid,exec_list)
 
     # merge camera image and bev image into a combined view
     img_rgb_h, img_rgb_w = img_rgb.shape[:2]
@@ -426,7 +417,7 @@ def show_objects_in_bev_labels_in_camera(detections, bev_maps, image, object_lab
 
 
 # visualize object labels in camera image
-def project_labels_into_camera(camera_calibration, image, labels, labels_valid, img_resize_factor=1.0):
+def project_labels_into_camera(camera_calibration, image, labels, labels_valid,exec_list, img_resize_factor=1.0):
 
     # get transformation matrix from vehicle frame to image
     vehicle_to_image = waymo_utils.get_image_transform(camera_calibration)
@@ -439,7 +430,12 @@ def project_labels_into_camera(camera_calibration, image, labels, labels_valid, 
             colour = (255, 0, 0)
 
         # only show labels of type "vehicle"
-        if(label.type == label_pb2.Label.Type.TYPE_VEHICLE):
+        if((label.type == label_pb2.Label.Type.TYPE_VEHICLE) and (vis)): ##Ins PP Mar 21st 2022
+            
+            ## SoC PP Mar 21 2022
+            if 'show_objects_and_labels_in_bev' not in exec_list:
+                label = scale_label_pixel_to_m(label)
+            ## EoC PP Mar 21 2022
             waymo_utils.draw_3d_box(image, vehicle_to_image, label, colour=colour)
 
     # resize image
@@ -451,4 +447,14 @@ def project_labels_into_camera(camera_calibration, image, labels, labels_valid, 
         return img_resized
     else:
         return image
-
+    
+def scale_label_pixel_to_m(label):
+    label.box.center_x = 609 - label.box.center_x
+    label.box.center_y = 609 - label.box.center_y
+    x  = label.box.center_y * (50/609)
+    label.box.center_y = (label.box.center_x)* (50/609) -25
+    label.box.center_x = x
+    label.box.width = label.box.width*(50/609)
+    label.box.length = label.box.length*(50/609)
+    return label
+    

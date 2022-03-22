@@ -156,15 +156,11 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
 
             y_corners = get_corners(label.box.center_x,label.box.center_y,label.box.width,label.box.length, label.box.heading)
             
-            match_fn = 0
-            
             for yhat, d in zip(yhat_corners,detections):
                 iou = calculate_iou(y_corners,yhat)
                 
                 if iou > .6:
                    
-                    match_fn = 1
-                    match_fp = match_fp + 1
                     i,_x,_y, _z, _h, _w, _l, _yaw = d
                     x = (_y+25)*(609/50)
                     _y = (_x)*(609/50) 
@@ -179,8 +175,7 @@ def measure_detection_performance(detections, labels, labels_valid,lidar_bev, co
                         img = drawRotatedBox(img, _x,_y,_w,_l, (-1)*_yaw,color_w)
                     true_positives = true_positives + 1
                     matches_lab_det.append([iou,dist_x, dist_y, dist_z])
-             
-                   
+                           
             
             false_negatives = all_positives - true_positives                     
             
